@@ -22,4 +22,6 @@ sem_wait(sem_id);
 /* access the data by the pointer shared_memory */
 sem_post(sem_id);
 ```
-
+## 关于Makefile
+记得加上链接选项!
+你可以直接使用make elevator
