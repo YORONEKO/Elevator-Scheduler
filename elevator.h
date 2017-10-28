@@ -28,6 +28,9 @@
 #define CLOSE_DOOR 1
 #define OPEN_DOOR 0
 
+#define CELLING 3
+#define GROUND 1
+
 #define NR_READER 4
 
 enum DIRECTION {
