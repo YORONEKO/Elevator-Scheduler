@@ -28,6 +28,8 @@
 #define CLOSE_DOOR 1
 #define OPEN_DOOR 0
 
+#define NR_READER 4
+
 enum DIRECTION {
 	DIR_UP, DIR_DOWN 
 };

@@ -70,7 +70,8 @@ void *monitor(void*arg){
 		exit(-1);
 	}
 	*readerCnt=0;
-	sem_post(cntInit);
+	for(int i=0;i<NR_READER-1;i++)
+		sem_post(cntInit);
 	sem_t*mutex;
 	mutex=sem_open("mutex",O_CREAT,0644,1);
 	if(mutex==SEM_FAILED){

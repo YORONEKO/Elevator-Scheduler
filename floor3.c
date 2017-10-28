@@ -114,6 +114,7 @@ void *monitor(void*arg){
 		sem_unlink("statusInit");
 		exit(-1);
 	}
+
 	sem_wait(statusInit);
 
 	while(1){

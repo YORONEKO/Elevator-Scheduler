@@ -4,7 +4,8 @@
 struct elevator_status status = {DIR_UP,STOP,1};
 
 struct elevator_status* shared_memory;
-sem_t* status_init;
+sem_t* sem_id;
+sem_t* w;
 sem_t* wrt;
 
 /* in thread */
@@ -36,6 +37,9 @@ void* dealWithMessage(){
 			exit(EXIT_FAILURE);  
 		}
 
+		/*for test*/
+		printf("%d\n",data.val);
+
 		pthread_mutex_lock(&mutex);
 		int count = 0;
 		for(int i=0;i<3;i++){
@@ -54,7 +58,6 @@ void* dealWithMessage(){
 				dst[dstfloor-1] = 1;
 			if(count == 0 && dstfloor != status.floor){
 				status.direction = dstfloor > status.floor ? DIR_UP : DIR_DOWN; 
-				/* if the direction changes, write it into the shared memory */
 				writeIntoStatus();
 			}
 		}
@@ -92,8 +95,8 @@ int main(int argc,char* argv[]){
 	}
 
 	/* for initial */
-	status_init = sem_open(W_KEY,O_CREAT,0644,0);	
-	if(status_init == SEM_FAILED){
+	w = sem_open(W_KEY,O_CREAT,0644,0);	
+	if(w == SEM_FAILED){
 		perror("unable to create semaphore");
 		sem_unlink(W_KEY);
 		exit(-1);
@@ -101,9 +104,10 @@ int main(int argc,char* argv[]){
 
 	/* Initialize the shared memory */
 	writeIntoStatus();
-	sem_post(status_init);
+	/* increase 4 times because 4 process need to wait */
+	for(int i=0;i<NR_READER;i++)
+		sem_post(w);
 
-	/* create thread for message dealer */
 	pthread_t mDealer;
 	
 	pthread_mutex_init(&mutex,NULL);
@@ -112,12 +116,12 @@ int main(int argc,char* argv[]){
 	/* TODO add your pthread here */
 
 
-	/* TODO add join and destroy */
+	/* TODO add join */
 	pthread_join(mDealer,NULL);
 	pthread_mutex_destroy(&mutex);
 
 	/* close the sem */
-	sem_close(status_init);
+	sem_close(w);
 	sem_close(wrt);
 	sem_unlink(W_KEY);
 	sem_unlink(WRT_KEY);
