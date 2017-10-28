@@ -40,8 +40,7 @@ struct msg_st{
 
 struct elevator_status* status;
 sem_t* sem_id;
-bool upNow = false;
-bool downNow = false;
+
 pthread_t main_tid;
 void *monitor(void*arg){
 
@@ -123,12 +122,6 @@ void *monitor(void*arg){
 		if((*readerCnt)==1)
 			sem_wait(wrt);
 		sem_post(mutex);
-		if(status->status==STOP&&status->floor==2&&status->direction==DIR_UP){
-			upNow=false;
-		}
-		if(status->status==STOP&&status->floor==2&&status->direction==DIR_DOWN){
-			downNow=false;
-		}
 		printf("The elevator is now at FLOOR %d ",status->floor);
 		if(status->status==STOP){
 			printf("and stopped\n");
@@ -140,16 +133,13 @@ void *monitor(void*arg){
 		else{
 			printf("and moving down\n");
 		}
-		printf("You are at the 2nd floor");
-		if (upNow){
-			printf(",and the UP button has been pressed");
-		}
-		if (downNow){
-			printf(",and the DOWN button has been pressed");
-		}
-		printf("\nPlease choose the direction you want to go:\n");
-		printf("1.UP\n");
-		printf("2.DOWN\n");
+		printf("This is inside the elevator;\n");
+		printf("Please choose the destination or open/close the door:\n");
+		printf("1.FLOOR 1\n");
+		printf("2.FLOOR 2\n");
+		printf("3.FLOOR 3\n");
+		printf("4.OPEN THE DOOR\n");
+		printf("5.CLOSE THE DOOR\n");
 		printf("Input your choice:\n");
     	//printf("%d %d %d\n",status->direction,status->status,status->floor);
 		sem_wait(mutex);
@@ -173,43 +163,55 @@ int main(){
 		printf("msgget failed from 1st floor with error:%d\n", errno);
 		exit(EXIT_FAILURE);
 	}
-	
+	bool upNow = false;
+	bool downNow = false;
     struct msg_st msgSend;
 	msgSend.type = 1;
 	while (1){
-		/*printf("This is the 2nd floor;\n");
-		if (upNow){
-			printf("UP button has been pressed\n");
-		}
-		if (downNow){
-			printf("DOWN button has been pressed\n");
-		}
-		printf("Please choose the direction:\n");
-		printf("1.UP\n");
-		printf("2.DOWN\n");
+		/*printf("This is inside the elevator;\n");
+		printf("Please choose the destination or open/close the door:\n");
+		printf("1.FLOOR 1\n");
+		printf("2.FLOOR 2\n");
+		printf("3.FLOOR 3\n");
+		printf("4.OPEN THE DOOR\n");
+		printf("5.CLOSE THE DOOR\n");
 		printf("Input your choice:\n");*/
 		char choice[20];
 		scanf("%s", choice);
 		if (strlen(choice) == 1 && choice[0] == '1'){
-			if (!upNow){
-				msgSend.val = UP(2);
+				msgSend.val = FLOOR(1);
 				if (msgsnd(msgid, (void*)&msgSend, 4, 0) == -1){
 					printf("msgsnd failed from 1st floor\n");
 					exit(EXIT_FAILURE);
 				}
-				upNow=true;
-			}
 		}
 		else if (strlen(choice) == 1 && choice[0] == '2'){
-			if (!downNow){
-				msgSend.val = DOWN(2);
+			msgSend.val = FLOOR(2);
 				if (msgsnd(msgid, (void*)&msgSend, 4, 0) == -1){
 					printf("msgsnd failed from 1st floor\n");
 					exit(EXIT_FAILURE);
 				}
-				downNow=true;
-
-			}
+		}
+		else if (strlen(choice) == 1 && choice[0] == '3'){
+			msgSend.val = FLOOR(3);
+				if (msgsnd(msgid, (void*)&msgSend, 4, 0) == -1){
+					printf("msgsnd failed from 1st floor\n");
+					exit(EXIT_FAILURE);
+				}
+		}
+		else if (strlen(choice) == 1 && choice[0] == '4'){
+			msgSend.val = OPEN_DOOR;
+				if (msgsnd(msgid, (void*)&msgSend, 4, 0) == -1){
+					printf("msgsnd failed from 1st floor\n");
+					exit(EXIT_FAILURE);
+				}
+		}
+		else if (strlen(choice) == 1 && choice[0] == '2'){
+			msgSend.val = CLOSE_DOOR;
+				if (msgsnd(msgid, (void*)&msgSend, 4, 0) == -1){
+					printf("msgsnd failed from 1st floor\n");
+					exit(EXIT_FAILURE);
+				}
 		}
 		else{
 			printf("Input error. Please try again.\n");

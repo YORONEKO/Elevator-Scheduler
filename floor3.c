@@ -40,7 +40,8 @@ struct msg_st{
 
 struct elevator_status* status;
 sem_t* sem_id;
-
+bool upNow = false;
+bool downNow = false;
 pthread_t main_tid;
 void *monitor(void*arg){
 
@@ -123,13 +124,34 @@ void *monitor(void*arg){
 		if((*readerCnt)==1)
 			sem_wait(wrt);
 		sem_post(mutex);
-		if(status->direction==DIR_UP){
-			printf("Direction:UP\n");
+		if(status->status==STOP&&status->floor==3&&status->direction==DIR_UP){
+			upNow=false;
+		}
+		if(status->status==STOP&&status->floor==3&&status->direction==DIR_DOWN){
+			downNow=false;
+		}
+		printf("The elevator is now at FLOOR %d ",status->floor);
+		if(status->status==STOP){
+			printf("and stopped\n");
+
+		}
+		else if(status->direction==DIR_UP){
+			printf("and moving up\n");
 		}
 		else{
-			printf("Direction:DOWN\n");
+			printf("and moving down\n");
 		}
-		printf("Now at FLOOR %d\n",status->floor);
+		printf("You are at the 3rd floor");
+		if (upNow){
+			printf(",and the UP button has been pressed");
+		}
+		if (downNow){
+			printf(",and the DOWN button has been pressed");
+		}
+		printf("\nPlease choose the direction you want to go:\n");
+		printf("1.UP\n");
+		printf("2.DOWN\n");
+		printf("Input your choice:\n");
     	//printf("%d %d %d\n",status->direction,status->status,status->floor);
 		sem_wait(mutex);
 		(*readerCnt)--;
@@ -152,22 +174,10 @@ int main(){
 		printf("msgget failed from 1st floor with error:%d\n", errno);
 		exit(EXIT_FAILURE);
 	}
-	bool upNow = false;
-	bool downNow = false;
+	
     struct msg_st msgSend;
 	msgSend.type = 1;
 	while (1){
-		printf("This is the 3rd floor;\n");
-		if (upNow){
-			printf("UP button has been pressed\n");
-		}
-		if (downNow){
-			printf("DOWN button has been pressed\n");
-		}
-		printf("Please choose the direction:\n");
-		printf("1.UP\n");
-		printf("2.DOWN\n");
-		printf("Input your choice:\n");
 		char choice[20];
 		scanf("%s", choice);
 		if (strlen(choice) == 1 && choice[0] == '1'){
