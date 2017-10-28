@@ -16,10 +16,8 @@ int dst[3] = {0,0,0};
 int count = 0;
 
 void writeIntoStatus(){
-	sem_wait(w);
 	sem_wait(wrt);
 	memcpy(shared_memory,&status,sizeof(status));
-	sem_post(w);
 	sem_post(wrt);
 }
 
@@ -60,13 +58,12 @@ void* dealWithMessage(){
 				writeIntoStatus();
 			}
 		}
-
 		pthread_mutex_unlock(&mutex);
 	}
 
 	if(msgctl(msgid, IPC_RMID, 0) == -1){  
-        fprintf(stderr, "msgctl(IPC_RMID) failed\n");  
-        exit(EXIT_FAILURE);  
+		fprintf(stderr, "msgctl(IPC_RMID) failed\n");  
+		exit(EXIT_FAILURE);  
     }  
 }
 
@@ -87,13 +84,15 @@ int main(int argc,char* argv[]){
 	shared_memory = (struct elevator_status*) shm_status;
 
 	/* semaphore for writer*/
-	wrt =sem_open("wrt",O_CREAT,0644,1);
+	wrt =sem_open(WRT_KEY,O_CREAT,0644,1);
 	if(wrt==SEM_FAILED){
 		perror("unable to create semaphore");
 		sem_unlink("wrt");
 		exit(-1);
 	}
-	w = sem_open(W_KEY,O_CREAT,0644,1);	
+
+	/* for initial */
+	w = sem_open(W_KEY,O_CREAT,0644,0);	
 	if(w == SEM_FAILED){
 		perror("unable to create semaphore");
 		sem_unlink(W_KEY);
@@ -102,7 +101,7 @@ int main(int argc,char* argv[]){
 
 	/* Initialize the shared memory */
 	writeIntoStatus();
-
+	sem_post(w);
 
 	pthread_t mDealer;
 	

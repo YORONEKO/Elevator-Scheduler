@@ -19,11 +19,11 @@
 #define UP(x) (x*10+1)
 #define DOWN(x) (x*10+2)
 #define FLOOR(x) (x*10)
-#define MSG_KEY 1001
-#define STATUS_KEY 1002
-#define READERCNT_KEY 1003 
+#define MSG_KEY 1234
+#define STATUS_KEY 1000
+#define READERCNT_KEY 1001 
 #define MUTEX_KEY "mutex" 
-#define W_KEY "w"
+#define W_KEY "statusInit"
 #define WRT_KEY "wrt" 
 #define CLOSE_DOOR 1
 #define OPEN_DOOR 0
