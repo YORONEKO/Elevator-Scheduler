@@ -10,10 +10,9 @@ sem_t* wrt;
 
 /* in thread */
 pthread_mutex_t mutex;
-int up[3] = { 0,0,0 };
-int down[3] = { 0,0,0 };
-int dst[3] = { 0,0,0 };
-int count = 0;
+int up[4] = { 0,0,0,0};
+int down[4] = { 0,0,0,0};
+int dst[4] = { 0,0,0,0};
 
 void writeIntoStatus() {
 	sem_wait(wrt);
@@ -42,7 +41,7 @@ void* dealWithMessage() {
 
 		pthread_mutex_lock(&mutex);
 		int count = 0;
-		for (int i = 0; i<3; i++) {
+		for (int i = GROUND; i<=CELLING; i++) {
 			count += (up[i] + down[i] + dst[i]);
 		}
 		if (data.val == OPEN_DOOR && status.status == STOP) {
@@ -51,11 +50,11 @@ void* dealWithMessage() {
 		else if (data.val != OPEN_DOOR && data.val != CLOSE_DOOR) {
 			int dstfloor = data.val / 10;
 			if (data.val == UP(dstfloor))
-				up[dstfloor - 1] = 1;
+				up[dstfloor] = 1;
 			else if (data.val == DOWN(dstfloor))
-				down[dstfloor - 1] = 1;
+				down[dstfloor] = 1;
 			else
-				dst[dstfloor - 1] = 1;
+				dst[dstfloor] = 1;
 			if (count == 0 && dstfloor != status.floor) {
 				status.direction = dstfloor > status.floor ? DIR_UP : DIR_DOWN;
 				writeIntoStatus();
@@ -64,6 +63,7 @@ void* dealWithMessage() {
 		pthread_mutex_unlock(&mutex);
 	}
 
+
 	if (msgctl(msgid, IPC_RMID, 0) == -1) {
 		fprintf(stderr, "msgctl(IPC_RMID) failed\n");
 		exit(EXIT_FAILURE);
@@ -71,84 +71,103 @@ void* dealWithMessage() {
 }
 void* dealWithElevator()
 {
-	struct msg_st data;
-	struct msg_st buf[100];
-	int len = 0;
-	int msg_type = 0;
-	//struct elevator_status elevator;
 	while (1)
 	{
+
+		int flag_up = 0;
+		int flag_down = 0;
+		int flag_cur = 0;
+		int step = 0;
+		int flag_run = 1;
+
 		pthread_mutex_lock(&mutex);
 
+		flag_run = status.status == RUN ? 1 : 0;
+		
 		writeIntoStatus();
 
-		int step = 0;
-		int flag = 0;
-		int i;
+		int curfloor = status.floor;
 
-		if (status.floor == GROUND)
-		{
-			status.direction = UP;
-			status.status = STOP;
+		flag_cur = up[curfloor] + down[curfloor] + dst[curfloor];
+
+		for(int i=curfloor+1;i<=CELLING;i++){
+			flag_up += (up[i] + down[i] + dst[i]);
 		}
-		else if (status.floor == CELLING)
-		{
-			status.direction = DOWN;
-			status.status = STOP;
-		}
-		else
-		{
-			if (status.direction == UP)
-			{
-				for (i = status.floor; i < CELLING; i++)
-				{
-					if (up[i] > 0 || dst[i] > 0)
-					{
-						flag = 1;
-						break;
-					}
-				}
-				if (i == status.floor)
-					step = 0;
-				else
-					step = 1;
-			}
-			else
-			{
-				for (i = status.floor; i >= GROUND; i--)
-				{
-					if (down[i] > 0 || dst[i] > 0)
-					{
-						flag = 2;
-						break;
-					}
-				}
-				if (i == status.floor)
-					step = 0;
-				else
-					step = -1;
-			}
+		for(int i=curfloor-1;i>=GROUND;i--){
+			flag_down += (up[i] + down[i] + dst[i]);
 		}
 		pthread_mutex_unlock(&mutex);
-		if (flag == 0)
-		{
-			sleep(2);
-		}
+
+		/* wait here */
+		if(flag_up + flag_down + flag_cur == 0)
+			continue;
+
+		/* need to run */
+		/* whether to stop */
 		pthread_mutex_lock(&mutex);
 
-		if (flag == 1)
-		{
-			status.status = RUN;
-			status.floor += step;
+		int toStop = dst[curfloor];
+
+		dst[curfloor] = 0;
+		if(status.direction == DIR_UP){
+			toStop |= up[curfloor];
+			toStop |= (down[curfloor] & !flag_up);
+			up[curfloor] = 0;
+			//down[curfloor] = flag_up ? down[curfloor] : 0;
 		}
-		else
-		{
-			status.status = RUN;
-			status.floor += step;
+		else{
+			toStop |= down[curfloor];
+			toStop |= (up[curfloor] & !flag_down);
+			down[curfloor] = 0;
+			//up[curfloor] = flag_down ? up[curfloor] : 0;
 		}
 
+		if(toStop)
+			status.status = STOP;
+
+		pthread_mutex_unlock(&mutex);
+
+		if(toStop && flag_run){
+			printf("floor %d\n",curfloor);
+			printf("open the door\n");
+			sleep(1);
+			printf("close the door\n");
+			sleep(1);
+		}
+
+		/* continue to run */
+		pthread_mutex_lock(&mutex);
+
+		status.status = RUN;
+
+		if(!toStop)
+			status.floor += status.direction == DIR_UP ? 1 : -1;
+		else{
+			if(status.direction == DIR_UP)
+				status.direction = flag_up ? DIR_UP : DIR_DOWN;
+			else
+				status.direction = flag_down ? DIR_DOWN : DIR_UP;		
+
+		
+			if(dst[curfloor] || (up[curfloor] && status.direction==DIR_UP)
+				|| (down[curfloor] && status.direction==DIR_DOWN)){
+				step = 0;
+				if(status.direction==DIR_UP)
+					up[curfloor] = 0;
+				else
+					down[curfloor] = 0;
+			}
+			else
+				step = status.direction == DIR_UP ? !!flag_up : -(!!flag_down);
+
+			status.floor += step;
+			if(flag_up + flag_down == 0)
+				status.status = STOP;
+		}
 		pthread_mutex_unlock(&mutex);
 	}
+
+
 }
 
 int main(int argc, char* argv[]) {
@@ -197,8 +216,6 @@ int main(int argc, char* argv[]) {
 	/* TODO add your pthread here */
 
 	pthread_t mElevator;
-
-	pthread_mutex_init(&mutex, NULL);
 
 	pthread_create(&mElevator, NULL, dealWithElevator, NULL);
 
