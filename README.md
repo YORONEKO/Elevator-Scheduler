@@ -1,27 +1,20 @@
 # Elevator-Scheduler
-## 关于互斥访问
-
-请参考elevator.c中的
+## 关于初始化的一些说明
 
 ``` c
-struct elevator_status* shared_memory;
-sem_t* sem_id;
-/* Map the shared memory */
-int shared_seg_size = sizeof(struct elevator_status);
-/* only use S_IRUSR when you only need to read */
-int shmfd = shm_open(SHMOBJ_PATH, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR);
-ftruncate(shmfd, shared_seg_size);
-shared_memory = (struct elevator_status*)
-  mmap(NULL, shared_seg_size, PROT_READ | PROT_WRITE, MAP_SHARED, shmfd, 0);
-
-/* semaphore */
-sem_id = sem_open(SEM_PATH, O_CREAT, S_IRUSR | S_IWUSR, 1);
-
-/* modify or read the shared data*/
-sem_wait(sem_id);
-/* access the data by the pointer shared_memory */
-sem_post(sem_id);
+/* in order to init readerCnt */
+sem_t*cntInit;
+cntInit=sem_open("cntInit",O_CREAT,0644,0);
+if(cntInit==SEM_FAILED){
+  perror("unable to create semaphore");
+  sem_unlink("cntInit");
+  exit(-1);
+}
+*readerCnt=0;
+for(int i=0;i<NR_READER-1;i++)
+  sem_post(cntInit);
 ```
-## 关于Makefile
-记得加上链接选项!
-你可以直接使用make elevator
+
+每个读者进程尝试创建一个cntInit的信号变量, 但只有第一个读者进程, 拥有初始化的权限, 且初始化后应执行NR_READER - 1个sem_post, 以使得其他读者进程能继续执行.
+
+初始化elevator status同理.
