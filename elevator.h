@@ -1,25 +1,32 @@
 #ifndef __EVEVATOR_
 #define __EVEVATOR_
 
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>                                                              
 #include <stdlib.h>
-#include <sys/mman.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+#include <string.h>
 #include <unistd.h>
 #include <semaphore.h>
-#include <string.h>
+#include <pthread.h>
+#include <sys/ipc.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <sys/msg.h>  
-#include <errno.h>
-
-#define SHMOBJ_PATH "/shm_AOS"
-#define SEM_PATH "/sem_AOS"
+#include <sys/shm.h> 
+#include <sys/types.h>
 
 #define UP(x) (x*10+1)
 #define DOWN(x) (x*10+2)
 #define FLOOR(x) (x*10)
-#define MSG_KEY 1234
+#define MSG_KEY 1001
+#define STATUS_KEY 1002
+#define READERCNT_KEY 1003 
+#define MUTEX_KEY "mutex" 
+#define W_KEY "w"
+#define WRT_KEY "wrt" 
+#define CLOSE_DOOR 1
+#define OPEN_DOOR 0
 
 enum DIRECTION {
 	DIR_UP, DIR_DOWN 
@@ -40,5 +47,4 @@ struct msg_st{
 	int val;
 };
 
-#endif
-
+#endif 
