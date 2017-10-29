@@ -150,7 +150,6 @@ void *monitor(void*arg){
 		}
 		printf("\nPlease choose the direction you want to go:\n");
 		printf("1.UP\n");
-		printf("2.DOWN\n");
 		printf("Input your choice:\n");
     	//printf("%d %d %d\n",status->direction,status->status,status->floor);
 		sem_wait(mutex);
@@ -201,6 +200,7 @@ int main(){
 				upNow=true;
 			}
 		}
+		/*
 		else if (strlen(choice) == 1 && choice[0] == '2'){
 			if (!downNow){
 				msgSend.val = DOWN(1);
@@ -212,6 +212,7 @@ int main(){
 
 			}
 		}
+		*/
 		else{
 			printf("Input error. Please try again.\n");
 		}

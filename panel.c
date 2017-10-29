@@ -206,7 +206,7 @@ int main(){
 					exit(EXIT_FAILURE);
 				}
 		}
-		else if (strlen(choice) == 1 && choice[0] == '2'){
+		else if (strlen(choice) == 1 && choice[0] == '5'){
 			msgSend.val = CLOSE_DOOR;
 				if (msgsnd(msgid, (void*)&msgSend, 4, 0) == -1){
 					printf("msgsnd failed from 1st floor\n");

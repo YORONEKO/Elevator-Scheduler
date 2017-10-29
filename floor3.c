@@ -149,8 +149,8 @@ void *monitor(void*arg){
 			printf(",and the DOWN button has been pressed");
 		}
 		printf("\nPlease choose the direction you want to go:\n");
-		printf("1.UP\n");
-		printf("2.DOWN\n");
+		/*printf("1.UP\n");*/
+		printf("1.DOWN\n");
 		printf("Input your choice:\n");
     	//printf("%d %d %d\n",status->direction,status->status,status->floor);
 		sem_wait(mutex);
@@ -180,6 +180,7 @@ int main(){
 	while (1){
 		char choice[20];
 		scanf("%s", choice);
+		/*
 		if (strlen(choice) == 1 && choice[0] == '1'){
 			if (!upNow){
 				msgSend.val = UP(3);
@@ -189,8 +190,8 @@ int main(){
 				}
 				upNow=true;
 			}
-		}
-		else if (strlen(choice) == 1 && choice[0] == '2'){
+		}*/
+		if (strlen(choice) == 1 && choice[0] == '1'){
 			if (!downNow){
 				msgSend.val = DOWN(3);
 				if (msgsnd(msgid, (void*)&msgSend, 4, 0) == -1){
