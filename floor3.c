@@ -124,10 +124,10 @@ void *monitor(void*arg){
 		if((*readerCnt)==1)
 			sem_wait(wrt);
 		sem_post(mutex);
-		if(status->status==STOP&&status->floor==3&&status->direction==DIR_UP){
+		if(status->status==STOP&&status->floor==3){
 			upNow=false;
 		}
-		if(status->status==STOP&&status->floor==3&&status->direction==DIR_DOWN){
+		if(status->status==STOP&&status->floor==3){
 			downNow=false;
 		}
 		printf("The elevator is now at FLOOR %d ",status->floor);

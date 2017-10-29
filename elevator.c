@@ -93,6 +93,7 @@ void* dealWithElevator()
 		for(int i=curfloor-1;i>=GROUND;i--){
 			flag_down += (up[i] + down[i] + dst[i]);
 		}
+
 		pthread_mutex_unlock(&mutex);
 
 		/* wait here */
@@ -123,15 +124,18 @@ void* dealWithElevator()
 			status.status = STOP;
 
 		pthread_mutex_unlock(&mutex);
-
+		
 		printf("At floor %d\n",curfloor);
-		sleep(1);
+		sleep(2);
 
 		if(toStop){
+			pthread_mutex_lock(&mutex);
+			writeIntoStatus();
+			pthread_mutex_unlock(&mutex);
 			printf("open the door\n");
-			sleep(1);
+			sleep(2);
 			printf("close the door\n");
-			sleep(1);
+			sleep(2);
 		}
 
 		/* continue to run */
@@ -146,7 +150,11 @@ void* dealWithElevator()
 				status.direction = flag_up ? DIR_UP : DIR_DOWN;
 			else
 				status.direction = flag_down ? DIR_DOWN : DIR_UP;		
-
+		
+			if(curfloor == GROUND)
+				status.direction = DIR_UP;
+			if(curfloor == CELLING)
+				status.direction = DIR_DOWN;
 		
 			if(dst[curfloor] || (up[curfloor] && status.direction==DIR_UP)
 				|| (down[curfloor] && status.direction==DIR_DOWN)){
