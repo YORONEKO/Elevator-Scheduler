@@ -78,11 +78,8 @@ void* dealWithElevator()
 		int flag_down = 0;
 		int flag_cur = 0;
 		int step = 0;
-		int flag_run = 1;
 
 		pthread_mutex_lock(&mutex);
-
-		flag_run = status.status == RUN ? 1 : 0;
 		
 		writeIntoStatus();
 
@@ -127,8 +124,10 @@ void* dealWithElevator()
 
 		pthread_mutex_unlock(&mutex);
 
-		if(toStop && flag_run){
-			printf("floor %d\n",curfloor);
+		printf("At floor %d\n",curfloor);
+		sleep(1);
+
+		if(toStop){
 			printf("open the door\n");
 			sleep(1);
 			printf("close the door\n");
@@ -161,10 +160,11 @@ void* dealWithElevator()
 				step = status.direction == DIR_UP ? !!flag_up : -(!!flag_down);
 
 			status.floor += step;
-			if(flag_up + flag_down == 0)
+			if(flag_up + flag_down + up[curfloor] + down[curfloor] + dst[curfloor] == 0)
 				status.status = STOP;
 		}
 		pthread_mutex_unlock(&mutex);
+
 	}
 
 
